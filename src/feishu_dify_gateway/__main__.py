@@ -7,6 +7,7 @@ import uvicorn
 from .app import create_app
 from .config import Settings
 from .json_logging import configure_logging
+from .telemetry import configure_telemetry
 
 
 def bind_socket(host: str, port: int) -> socket.socket:
@@ -25,6 +26,7 @@ def main() -> None:
     if settings.port == settings.public_port:
         raise RuntimeError("Internal and public gateway ports must be different")
     app = create_app(settings)
+    configure_telemetry(app)
     listeners = [
         bind_socket(settings.host, settings.port),
         bind_socket(settings.host, settings.public_port),

@@ -26,6 +26,12 @@ services:
       ADMINISTRATIVE_INGRESS_SHARED_SECRET_FILE: "${ADMINISTRATIVE_INGRESS_SHARED_SECRET_FILE:-/run/secrets/administrative_ingress_shared_secret}"
       ADMINISTRATIVE_ROUTE_PREFIX: "${ADMINISTRATIVE_ROUTE_PREFIX:-/admin}"
       FEISHU_WS_ENABLED: "true"
+      # Tracing is opt-in: without this endpoint the gateway runs uninstrumented.
+      # Reach the collector by service name on shared-net. The collector's OTLP
+      # ports are published on loopback only, so host.docker.internal cannot be
+      # used from inside a container.
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}"
+      OTEL_SERVICE_NAME: "feishu-gateway"
     volumes:
       - feishu_secrets:/run/secrets:ro
       - feishu_gateway_data:/var/lib/feishu-gateway
