@@ -37,10 +37,7 @@ def is_administrative_route(text: str, prefix: str) -> bool:
         normalized_prefix
         and (
             normalized_text == normalized_prefix
-            or (
-                normalized_text.startswith(normalized_prefix)
-                and suffix[:1].isspace()
-            )
+            or (normalized_text.startswith(normalized_prefix) and suffix[:1].isspace())
         )
     )
 
@@ -70,9 +67,7 @@ class FeishuSender:
         self._max_attempts = max_attempts
         self._retry_base_seconds = retry_base_seconds
 
-    async def _retry_wait(
-        self, attempt: int, response: httpx.Response | None = None
-    ) -> None:
+    async def _retry_wait(self, attempt: int, response: httpx.Response | None = None) -> None:
         delay = self._retry_base_seconds * (2**attempt)
         if response is not None:
             retry_after = response.headers.get("Retry-After")
@@ -292,8 +287,7 @@ def extract_feishu_event_metadata(data: Any) -> FeishuEventMetadata | None:
 
     return FeishuEventMetadata(
         event_id=event_id,
-        event_type=_nonblank_text(getattr(header, "event_type", None))
-        or "im.message.receive_v1",
+        event_type=_nonblank_text(getattr(header, "event_type", None)) or "im.message.receive_v1",
         tenant_key=tenant_key,
         message_id=message_id,
         root_id=_nonblank_text(getattr(message, "root_id", None)),
@@ -369,10 +363,7 @@ class AdministrativeIngressClient:
 
             if response.status_code == 202:
                 return
-            if (
-                response.status_code in RETRYABLE_HTTP_STATUSES
-                and attempt + 1 < self._max_attempts
-            ):
+            if response.status_code in RETRYABLE_HTTP_STATUSES and attempt + 1 < self._max_attempts:
                 await self._retry_wait(attempt, response)
                 continue
             raise GatewayError(
@@ -476,9 +467,9 @@ class FeishuLongConnection:
                                 return
                             await self._handler(event_id, sender_id.open_id, text)
 
-                        if (
-                            not isinstance(text, str) or not text.strip()
-                        ) and (self._metadata_handler is None or metadata is None):
+                        if (not isinstance(text, str) or not text.strip()) and (
+                            self._metadata_handler is None or metadata is None
+                        ):
                             return
 
                         future = asyncio.run_coroutine_threadsafe(dispatch(), loop)

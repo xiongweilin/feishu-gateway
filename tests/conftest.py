@@ -18,9 +18,7 @@ class FakeSender:
         self.is_ready = True
         self.failure: Exception | None = None
 
-    async def send_text(
-        self, recipient_open_id: str, text: str, idempotency_key: str
-    ) -> None:
+    async def send_text(self, recipient_open_id: str, text: str, idempotency_key: str) -> None:
         self.idempotency_keys.append(idempotency_key)
         if self.failure is not None:
             raise self.failure

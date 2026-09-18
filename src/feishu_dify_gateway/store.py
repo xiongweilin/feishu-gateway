@@ -81,14 +81,10 @@ class AdministrativeCommunicationLedgerEntry:
             created_at=int(row["created_at"]),
             updated_at=int(row["updated_at"]),
             transport_accepted_at=(
-                None
-                if row["transport_accepted_at"] is None
-                else int(row["transport_accepted_at"])
+                None if row["transport_accepted_at"] is None else int(row["transport_accepted_at"])
             ),
             delivery_confirmed_at=(
-                None
-                if row["delivery_confirmed_at"] is None
-                else int(row["delivery_confirmed_at"])
+                None if row["delivery_confirmed_at"] is None else int(row["delivery_confirmed_at"])
             ),
         )
 
@@ -306,11 +302,7 @@ class StateStore:
                 "SELECT * FROM administrative_communication_ledger WHERE event_id = ?",
                 (event_id,),
             ).fetchone()
-        return (
-            None
-            if row is None
-            else AdministrativeCommunicationLedgerEntry.from_row(row)
-        )
+        return None if row is None else AdministrativeCommunicationLedgerEntry.from_row(row)
 
     def mark_administrative_communication_transport_accepted(
         self,

@@ -36,9 +36,7 @@ def configure_telemetry(app: FastAPI, service_name: str = "feishu-gateway") -> b
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-    resource = Resource.create(
-        {SERVICE_NAME: os.getenv("OTEL_SERVICE_NAME", service_name)}
-    )
+    resource = Resource.create({SERVICE_NAME: os.getenv("OTEL_SERVICE_NAME", service_name)})
     provider = TracerProvider(resource=resource)
     provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint)))
     trace.set_tracer_provider(provider)

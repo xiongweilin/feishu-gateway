@@ -145,9 +145,7 @@ class GatewayService:
         if not chunks:
             raise GatewayError("EMPTY_MESSAGE", "Message is empty", 422)
         for index, chunk in enumerate(chunks):
-            idempotency_key = str(
-                uuid.uuid5(FEISHU_DELIVERY_NAMESPACE, f"{delivery_key}:{index}")
-            )
+            idempotency_key = str(uuid.uuid5(FEISHU_DELIVERY_NAMESPACE, f"{delivery_key}:{index}"))
             await self.sender.send_text(recipient, chunk, idempotency_key)
 
     async def deliver_notification(
@@ -190,9 +188,7 @@ class GatewayService:
         if notification.url is not None:
             message += f"\n{notification.url}"
         try:
-            await self._send_chunks(
-                self.settings.feishu_alert_recipient_open_id, message, key
-            )
+            await self._send_chunks(self.settings.feishu_alert_recipient_open_id, message, key)
         except Exception as exc:
             error_code, retryable = self._delivery_failure(exc)
             if retryable:
@@ -343,19 +339,13 @@ class GatewayService:
                 if retryable:
                     self.store.mark_delivery_retrying(key, error_code, int(time.time()))
                     self.metrics.delivery_states.labels("alertmanager", "retrying").inc()
-                    self.metrics.delivery_attempts.labels(
-                        "alertmanager", "retryable_failure"
-                    ).inc()
+                    self.metrics.delivery_attempts.labels("alertmanager", "retryable_failure").inc()
                     self.store.release_event(key)
                 else:
                     self.store.mark_delivery_permanent_failed(key, error_code)
                     self.store.mark_processed(key, status="permanent_failed")
-                    self.metrics.delivery_states.labels(
-                        "alertmanager", "permanent_failed"
-                    ).inc()
-                    self.metrics.delivery_attempts.labels(
-                        "alertmanager", "permanent_failure"
-                    ).inc()
+                    self.metrics.delivery_states.labels("alertmanager", "permanent_failed").inc()
+                    self.metrics.delivery_attempts.labels("alertmanager", "permanent_failure").inc()
                 self.metrics.deliveries.labels("alertmanager", "error").inc()
                 raise
             self.store.mark_delivery_confirmed(key)

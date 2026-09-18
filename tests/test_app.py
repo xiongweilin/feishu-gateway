@@ -47,9 +47,7 @@ def test_alertmanager_route_is_hidden_on_public_listener(
     with TestClient(app, base_url=f"http://testserver:{settings.public_port}") as client:
         response = client.post("/v1/alerts/alertmanager", json={})
     assert response.status_code == 404
-    assert response.json() == {
-        "error": {"code": "NOT_FOUND", "message": "Resource not found"}
-    }
+    assert response.json() == {"error": {"code": "NOT_FOUND", "message": "Resource not found"}}
 
 
 def test_synthetic_prepare_is_internal_and_does_not_send(

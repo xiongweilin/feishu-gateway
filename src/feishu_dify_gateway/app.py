@@ -115,11 +115,7 @@ def create_app(
         request_id = request_id or uuid.uuid4().hex
         started = time.perf_counter()
         server = request.scope.get("server")
-        local_port = (
-            server[1]
-            if isinstance(server, (tuple, list)) and len(server) == 2
-            else None
-        )
+        local_port = server[1] if isinstance(server, (tuple, list)) and len(server) == 2 else None
         internal_only = request.url.path == "/v1/alerts/alertmanager" or (
             request.url.path.startswith("/v1/notifications/synthetic")
             or request.url.path.startswith("/v1/delivery-ledger/")

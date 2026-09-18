@@ -106,9 +106,7 @@ class Settings:
             administrative_ingress_base_url=os.getenv("ADMINISTRATIVE_INGRESS_BASE_URL", ""),
             administrative_ingress_shared_secret=shared_secret,
             administrative_communication_hmac_key=communication_key,
-            administrative_route_prefix=_route_prefix(
-                "ADMINISTRATIVE_ROUTE_PREFIX", "/admin"
-            ),
+            administrative_route_prefix=_route_prefix("ADMINISTRATIVE_ROUTE_PREFIX", "/admin"),
             feishu_base_url=os.getenv("FEISHU_BASE_URL", "https://open.feishu.cn"),
             host=os.getenv("GATEWAY_HOST", "0.0.0.0"),
             port=int(os.getenv("GATEWAY_PORT", "8082")),
