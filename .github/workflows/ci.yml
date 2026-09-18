@@ -1,26 +1,105 @@
 name: ci
 
+# 分层门禁：每个 job 只对应一个 failure class。
+#   hygiene      workflow/仓库卫生：actionlint、zizmor、gitleaks
+#   dependencies 依赖解析结果的已知漏洞：OSV-Scanner（uv.lock）
+#   verify       运行契约：ruff、ruff format、mypy、pytest、compose 校验、镜像可构建
+#   image        可交付镜像及其组成：docker build、syft SBOM、grype（只在 main、tag、手动调度）
+
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ACTIONLINT_VERSION: "1.7.12.24"
+  ZIZMOR_VERSION: "1.30.1"
+  GITLEAKS_VERSION: "8.30.1"
+
 jobs:
-  verify:
+  hygiene:
+    name: hygiene
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: actionlint
+        run: pipx run --spec "actionlint-py==${ACTIONLINT_VERSION}" actionlint -color
+      - name: zizmor
+        run: pipx run "zizmor==${ZIZMOR_VERSION}" --persona=regular .github/workflows
+      - name: gitleaks
+        run: |
+          curl -sSfL -o "${RUNNER_TEMP}/gitleaks.tar.gz" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf "${RUNNER_TEMP}/gitleaks.tar.gz" -C "${RUNNER_TEMP}" gitleaks
+          "${RUNNER_TEMP}/gitleaks" git . --redact --no-banner --exit-code 1
+
+  dependencies:
+    name: dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: OSV-Scanner (uv.lock)
+        uses: google/osv-scanner-action/osv-scanner-action@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0
+        with:
+          scan-args: |-
+            --recursive
+            ./
+
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
         with:
           version: "0.12.1"
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --locked
       - run: uv run ruff check .
+      - name: Ruff format
+        run: uv run ruff format --check .
       - run: uv run mypy
       - run: uv run pytest -q --cov=feishu_dify_gateway --cov-report=term-missing --cov-report=xml:coverage.xml
       - run: docker compose -f compose.yaml config -q
       - run: docker build --tag feishu-gateway:ci .
+
+  image:
+    name: image (build / sbom / vulnerability)
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: 构建镜像
+        run: docker build --tag feishu-gateway:ci .
+      - name: SBOM (syft)
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          image: feishu-gateway:ci
+          format: spdx-json
+          output-file: sbom.spdx.json
+      - name: 镜像漏洞扫描 (grype)
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        with:
+          image: feishu-gateway:ci
+          severity-cutoff: high
+          # 只让已有修复版本的 high/critical 阻塞；基础镜像里无法修复的漏洞仍留在 SBOM 中。
+          only-fixed: true
+          fail-build: true
