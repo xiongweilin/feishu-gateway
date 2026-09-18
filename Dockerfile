@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:0.12.1 AS uv
+FROM ghcr.io/astral-sh/uv:0.12.16 AS uv
 
 FROM python:3.12-slim
 # 基础镜像会滞后于 Debian 安全更新：构建时先装上已发布的安全修复，
