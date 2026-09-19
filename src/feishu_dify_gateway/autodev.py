@@ -389,10 +389,13 @@ class AutodevBridge:
             logger.warning("autodev response send failed", extra={"event": "send_failed"})
 
     async def _send_text(self, chat_id: str, text: str, *, uuid: str) -> str:
+        # The V1 profile is owner-only P2P.  The inbound conversation's chat_id
+        # is retained for durable correlation, but Lark's P2P create-message
+        # endpoint requires the owner's open_id as the recipient.
         result = await self.channel.send(
-            chat_id,
+            self.settings.owner_open_id,
             {"text": text},
-            SendOpts(receive_id_type="chat_id", uuid=uuid),
+            SendOpts(receive_id_type="open_id", uuid=uuid),
         )
         if not result.success:
             raise OperatorApiError("Feishu message send failed")
@@ -400,9 +403,9 @@ class AutodevBridge:
 
     async def _send_card(self, chat_id: str, card: dict[str, Any], *, uuid: str) -> str:
         result = await self.channel.send(
-            chat_id,
+            self.settings.owner_open_id,
             {"card": card},
-            SendOpts(receive_id_type="chat_id", uuid=uuid),
+            SendOpts(receive_id_type="open_id", uuid=uuid),
         )
         if not result.success:
             raise OperatorApiError("Feishu card send failed")

@@ -134,6 +134,8 @@ async def test_owner_p2p_requirement_is_submitted_once_and_non_owner_is_rejected
 
     assert len(operator.submissions) == 1
     assert len(channel.sent) == 1
+    assert channel.sent[0][0] == "ou-owner"
+    assert channel.sent[0][2].receive_id_type == "open_id"
     assert bridge.store.request_for_chat("oc-chat") == "feishu:message-1"
 
 
@@ -157,6 +159,8 @@ async def test_card_action_is_fast_acknowledged_and_start_is_idempotent(tmp_path
 
     assert operator.started == ["feishu:message-1"]
     assert len(channel.sent) >= 3
+    assert all(item[0] == "ou-owner" for item in channel.sent)
+    assert all(item[2].receive_id_type == "open_id" for item in channel.sent)
     await bridge.stop()
 
 
