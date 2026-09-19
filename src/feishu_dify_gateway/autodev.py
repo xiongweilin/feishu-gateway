@@ -572,42 +572,31 @@ def _confirmation_card(
     normalized: NormalizedRequirement,
     status: dict[str, Any],
 ) -> dict[str, Any]:
+    buttons = [
+        _callback_button(
+            "开始自主开发",
+            {"action": "start", "request_id": request_id},
+            button_type="primary_filled",
+        ),
+        _callback_button("取消", {"action": "cancel", "request_id": request_id}),
+    ]
     return {
         "schema": "2.0",
         "header": {"title": {"tag": "plain_text", "content": "已收到需求"}},
         "body": {
             "elements": [
-                {"tag": "div", "text": {"tag": "plain_text", "content": normalized.title}},
+                {"tag": "markdown", "content": normalized.title},
                 {
-                    "tag": "div",
-                    "text": {
-                        "tag": "plain_text",
-                        "content": (
-                            f"长度：{len(normalized.text)}\n"
-                            f"摘要指纹：{normalized.content_sha256[:12]}\n"
-                            f"target：{status.get('targetId', 'configured')}\n"
-                            f"serving release：{status.get('servingReleaseId', 'unknown')}\n"
-                            "状态：等待启动"
-                        ),
-                    },
+                    "tag": "markdown",
+                    "content": (
+                        f"长度：{len(normalized.text)}\n"
+                        f"摘要指纹：{normalized.content_sha256[:12]}\n"
+                        f"target：{status.get('targetId', 'configured')}\n"
+                        f"serving release：{status.get('servingReleaseId', 'unknown')}\n"
+                        "状态：等待启动"
+                    ),
                 },
-                {
-                    "tag": "action",
-                    "actions": [
-                        {
-                            "tag": "button",
-                            "text": {"tag": "plain_text", "content": "开始自主开发"},
-                            "type": "primary",
-                            "value": {"action": "start", "request_id": request_id},
-                        },
-                        {
-                            "tag": "button",
-                            "text": {"tag": "plain_text", "content": "取消"},
-                            "type": "default",
-                            "value": {"action": "cancel", "request_id": request_id},
-                        },
-                    ],
-                },
+                _button_group(buttons),
             ]
         },
     }
@@ -617,41 +606,54 @@ def _intervention_card(event: OperatorEvent) -> dict[str, Any]:
     question = _safe(event.payload.get("question"))
     intervention_id = _safe(event.payload.get("intervention_id"))
     choices = event.payload.get("choices")
-    actions: list[dict[str, Any]] = []
+    buttons: list[dict[str, Any]] = []
     if isinstance(choices, list):
         for choice in choices[:8]:
             if isinstance(choice, str):
-                actions.append(
-                    {
-                        "tag": "button",
-                        "text": {"tag": "plain_text", "content": choice[:80]},
-                        "type": "default",
-                        "value": {
+                buttons.append(
+                    _callback_button(
+                        choice[:80],
+                        {
                             "action": "intervention",
                             "request_id": event.request_id,
                             "intervention_id": intervention_id,
                             "response": choice,
                         },
-                    }
+                    )
                 )
+    elements: list[dict[str, Any]] = [{"tag": "markdown", "content": question}]
+    if buttons:
+        elements.append(_button_group(buttons))
+    elements.append({"tag": "markdown", "content": "如需自由文本，请直接回复这条卡片。"})
     return {
         "schema": "2.0",
         "header": {"title": {"tag": "plain_text", "content": "需要人工介入"}},
-        "body": {
-            "elements": [
-                {"tag": "div", "text": {"tag": "plain_text", "content": question}},
-                *([{"tag": "action", "actions": actions}] if actions else []),
-                {
-                    "tag": "note",
-                    "elements": [
-                        {
-                            "tag": "plain_text",
-                            "content": "如需自由文本，请直接回复这条卡片。",
-                        }
-                    ],
-                },
-            ]
-        },
+        "body": {"elements": elements},
+    }
+
+
+def _callback_button(
+    text: str,
+    value: dict[str, Any],
+    *,
+    button_type: str = "default",
+) -> dict[str, Any]:
+    return {
+        "tag": "button",
+        "text": {"tag": "plain_text", "content": text},
+        "type": button_type,
+        "behaviors": [{"type": "callback", "value": value}],
+    }
+
+
+def _button_group(buttons: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "tag": "column_set",
+        "horizontal_spacing": "8px",
+        "columns": [
+            {"tag": "column", "width": "auto", "elements": [button]}
+            for button in buttons
+        ],
     }
 
 

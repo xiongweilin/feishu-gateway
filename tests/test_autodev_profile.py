@@ -136,6 +136,12 @@ async def test_owner_p2p_requirement_is_submitted_once_and_non_owner_is_rejected
     assert len(channel.sent) == 1
     assert channel.sent[0][0] == "ou-owner"
     assert channel.sent[0][2].receive_id_type == "open_id"
+    card = channel.sent[0][1]["card"]
+    button_group = card["body"]["elements"][-1]
+    assert button_group["tag"] == "column_set"
+    button = button_group["columns"][0]["elements"][0]
+    assert button["behaviors"][0]["type"] == "callback"
+    assert button["behaviors"][0]["value"]["action"] == "start"
     assert bridge.store.request_for_chat("oc-chat") == "feishu:message-1"
 
 
