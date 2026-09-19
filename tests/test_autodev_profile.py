@@ -136,6 +136,8 @@ async def test_owner_p2p_requirement_is_submitted_once_and_non_owner_is_rejected
     assert len(channel.sent) == 1
     assert channel.sent[0][0] == "ou-owner"
     assert channel.sent[0][2].receive_id_type == "open_id"
+    assert channel.sent[0][2].uuid.startswith("autodev-")
+    assert len(channel.sent[0][2].uuid) <= 64
     card = channel.sent[0][1]["card"]
     button_group = card["body"]["elements"][-1]
     assert button_group["tag"] == "column_set"

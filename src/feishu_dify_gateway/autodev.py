@@ -404,7 +404,7 @@ class AutodevBridge:
         result = await self.channel.send(
             self.settings.owner_open_id,
             {"text": text},
-            SendOpts(receive_id_type="open_id", uuid=uuid),
+            SendOpts(receive_id_type="open_id", uuid=_provider_uuid(uuid)),
         )
         if not result.success:
             raise OperatorApiError("Feishu message send failed")
@@ -414,7 +414,7 @@ class AutodevBridge:
         result = await self.channel.send(
             self.settings.owner_open_id,
             {"card": card},
-            SendOpts(receive_id_type="open_id", uuid=uuid),
+            SendOpts(receive_id_type="open_id", uuid=_provider_uuid(uuid)),
         )
         if not result.success:
             raise OperatorApiError("Feishu card send failed")
@@ -664,6 +664,11 @@ def _button_group(buttons: list[dict[str, Any]]) -> dict[str, Any]:
             for button in buttons
         ],
     }
+
+
+def _provider_uuid(value: str) -> str:
+    """Keep Feishu's outbound idempotency key bounded and provider-safe."""
+    return f"autodev-{hashlib.sha256(value.encode('utf-8')).hexdigest()[:56]}"
 
 
 def _safe(value: object) -> str:
