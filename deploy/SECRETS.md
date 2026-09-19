@@ -10,3 +10,16 @@
 6. 在 Windows 运行 `deploy/windows/set-feishu-gateway-credential.ps1`，录入同一个通知签名 key。
 7. 在云服务器交互运行 `sudo deploy/cloud/install-cloud-secrets.sh`，录入同一个通知签名 key，以及 SMTP credential（云端 watchdog 的可逆恢复输入；当前 systemd unit 由 `WATCHDOG_EMAIL_ENABLED=false` 禁用邮件发送）。
 8. 只核对文件存在、权限和服务健康；不要打印任何值。
+
+## Autonomous Development bridge
+
+The independent bridge uses a separate ACL-protected directory, by default
+`%ProgramData%\AutonomousDevelopment\secrets`, containing only `app_id`, `app_secret`,
+`owner_open_id` and `operator_hmac_secret`. Run
+`deploy/windows/set-autodev-feishu-secrets.ps1` interactively; it does not echo values. These
+files must never be copied into the existing `feishu_secrets` volume, Docker environment values,
+`.env`, logs or Git.
+
+`operator_hmac_secret` is shared only with the Autonomous Development control plane's
+`AUTODEV_OPERATOR_HMAC_SECRET_FILE`. It is not the existing notification HMAC, administrative
+HMAC, user HMAC, control-plane key or either Feishu App Secret.

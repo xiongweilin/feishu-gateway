@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
   "fastapi>=0.116,<1",
   "httpx>=0.28,<1",
+  "lark-channel-sdk==1.4.0",
   "lark-oapi>=1.4,<2",
   "opentelemetry-exporter-otlp-proto-http>=1.30,<2",
   "opentelemetry-instrumentation-fastapi>=0.51b0,<1",
@@ -14,6 +15,8 @@ dependencies = [
   "opentelemetry-sdk>=1.30,<2",
   "prometheus-client>=0.22,<1",
   "pydantic>=2.11,<3",
+  "pypdf>=5,<6",
+  "python-docx>=1.1,<2",
   "uvicorn[standard]>=0.35,<1",
 ]
 
@@ -32,6 +35,9 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[project.scripts]
+feishu-autodev-bridge = "feishu_dify_gateway.autodev:main"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/feishu_dify_gateway"]
 
@@ -46,7 +52,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
-allowed-confusables = ["："]
+allowed-confusables = ["：", "，", "；"]
 
 [tool.mypy]
 python_version = "3.12"
