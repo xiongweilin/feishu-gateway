@@ -84,6 +84,18 @@ uv run ruff check .
 uv run mypy
 ```
 
+## Autonomous Development profile
+
+Autonomous Development uses the independent `feishu-autodev-bridge` entrypoint documented in
+[docs/autodev-profile.md](docs/autodev-profile.md). It is a new Feishu Bot identity with a new
+secret directory, P2P owner allowlist, SQLite state file and operator HMAC. It accepts only
+requirements and explicit lifecycle actions for the single registered target; it is not a
+general-purpose chat, Dify or operations bot.
+
+The existing gateway profile, its ports, credentials, state and routing remain unchanged. Set up
+the new app and run the Windows helper only after following
+`D:\agent\autonomous-development\docs\feishu-autodev-app-setup.md`.
+
 ## Design decisions
 
 Detailed decisions are recorded in:
