@@ -659,10 +659,7 @@ def _button_group(buttons: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "tag": "column_set",
         "horizontal_spacing": "8px",
-        "columns": [
-            {"tag": "column", "width": "auto", "elements": [button]}
-            for button in buttons
-        ],
+        "columns": [{"tag": "column", "width": "auto", "elements": [button]} for button in buttons],
     }
 
 
