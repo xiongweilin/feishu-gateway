@@ -196,6 +196,39 @@ async def test_attachment_resource_is_not_needed_for_text_and_outbox_survives_re
     assert operator.acknowledged == ["event-1"]
 
 
+@pytest.mark.asyncio
+async def test_unbound_operator_event_does_not_block_feishu_delivery(tmp_path: Path) -> None:
+    channel = FakeChannel()
+    operator = FakeOperator()
+    store = AutodevStore(tmp_path / "state.db")
+    bridge = AutodevBridge(settings(tmp_path), store, operator, channel)
+    await bridge.handle_message(message())
+    operator.event_items = (
+        OperatorEvent(
+            event_id="unbound-event",
+            sequence=1,
+            request_id="local-acceptance-request",
+            cycle_id="cycle-0",
+            event_type="failed",
+            payload={"status": "failed"},
+        ),
+        OperatorEvent(
+            event_id="bound-event",
+            sequence=2,
+            request_id="feishu:message-1",
+            cycle_id="cycle-1",
+            event_type="completed",
+            payload={"status": "completed"},
+        ),
+    )
+
+    await bridge._drain_events()
+
+    assert store.operator_cursor() == 2
+    assert operator.acknowledged == ["bound-event"]
+    assert len(channel.sent) == 2
+
+
 def test_store_has_separate_durable_state(tmp_path: Path) -> None:
     first = AutodevStore(tmp_path / "first.db")
     second = AutodevStore(tmp_path / "second.db")

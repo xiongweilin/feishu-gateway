@@ -343,7 +343,16 @@ class AutodevBridge:
                 continue
             chat_id = self.store.chat_for_request(event.request_id or "")
             if chat_id is None:
-                return
+                # The operator stream is shared with other ingress sources and
+                # may contain historical events with no Feishu chat binding.
+                # Advance this bridge's local cursor so an unrelated event
+                # cannot block delivery for a later Feishu-owned request.
+                logger.info(
+                    "skipping operator event without Feishu chat binding",
+                    extra={"event": "operator_event_unbound", "event_id": event.event_id},
+                )
+                self.store.set_operator_cursor(event.sequence)
+                continue
             if self.store.delivery_status(event.event_id) != "sent":
                 self.store.record_delivery_attempt(event.event_id)
                 try:
