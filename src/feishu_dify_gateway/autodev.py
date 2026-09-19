@@ -668,7 +668,7 @@ def _button_group(buttons: list[dict[str, Any]]) -> dict[str, Any]:
 
 def _provider_uuid(value: str) -> str:
     """Keep Feishu's outbound idempotency key bounded and provider-safe."""
-    return f"autodev-{hashlib.sha256(value.encode('utf-8')).hexdigest()[:56]}"
+    return f"autodev-{hashlib.sha256(value.encode('utf-8')).hexdigest()[:40]}"
 
 
 def _safe(value: object) -> str:
